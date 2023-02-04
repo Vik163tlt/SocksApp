@@ -1,12 +1,18 @@
 package me.vik.socksstorageapp.service.Impl;
 
+import me.vik.socksstorageapp.dto.SockDto;
 import me.vik.socksstorageapp.exception.WritingFileException;
+import me.vik.socksstorageapp.model.Socks;
 import me.vik.socksstorageapp.service.FileService;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -64,4 +70,27 @@ public class FileServiceImpl implements FileService {
             throw new WritingFileException("Ошибка записи файла");
         }
     }
+
+    private SockDto mapToDto(Socks socks, int quantity) {
+        SockDto sockDto = new SockDto();
+        sockDto.setColor(socks.getColor());
+        sockDto.setSize(socks.getSize());
+        sockDto.setCottonPart(socks.getCottonPart());
+        sockDto.setQuantity(quantity);
+        return sockDto;
+    }
+
+    public ResponseEntity<Void> uploadFile(@RequestParam MultipartFile file) {
+        cleanFile();
+        try (FileOutputStream fos = new FileOutputStream(getFile())) {
+            IOUtils.copy(file.getInputStream(), fos);
+            return ResponseEntity.ok().build();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (IOException e) {
+            throw new WritingFileException("Неверный формат файла для записи, попробуйте снова");
+        }
+    }
+
 }

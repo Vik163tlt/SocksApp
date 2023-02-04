@@ -1,16 +1,15 @@
 package me.vik.socksstorageapp.controller;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import me.vik.socksstorageapp.dto.SockRequest;
+import me.vik.socksstorageapp.dto.SockDto;
 import me.vik.socksstorageapp.exception.InsufficientQuantityException;
 import me.vik.socksstorageapp.exception.InvalidSockRequestException;
-import me.vik.socksstorageapp.exception.WritingFileException;
 import me.vik.socksstorageapp.model.Color;
 import me.vik.socksstorageapp.model.Size;
 import me.vik.socksstorageapp.service.Impl.FileServiceImpl;
 import me.vik.socksstorageapp.service.SocksService;
-import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -34,27 +33,28 @@ public class SocksController {
         this.socksService = socksService;
     }
 
-    @ExceptionHandler(InvalidSockRequestException.class)
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public ResponseEntity<String> handleInvalidException(InvalidSockRequestException wrongSocksException) {
         return ResponseEntity.badRequest().body(wrongSocksException.getMessage());
     }
 
-    @ExceptionHandler(InsufficientQuantityException.class)
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public ResponseEntity<String> handleInvalidException(InsufficientQuantityException insufficientQuantityException) {
         return ResponseEntity.badRequest().body(insufficientQuantityException.getMessage());
     }
 
     @PostMapping
-    public void addSocks(@RequestBody SockRequest sockRequest) {
+    public void addSocks(@RequestBody SockDto sockRequest) {
         socksService.addSocks(sockRequest);
     }
 
     @PutMapping
-    public void issueSocks(@RequestBody SockRequest sockRequest) {
+    public void issueSocks(@RequestBody SockDto sockRequest) {
         socksService.issueSocks(sockRequest);
     }
 
     @GetMapping
+    @JsonValue
     public int getSocksCount(@RequestParam(required = false, name = "Цвет") Color color,
                              @RequestParam(required = false, name = "Размер") Size size,
                              @RequestParam(required = false, name = "Минимальный процент хлопка") Integer cottonMin,
@@ -63,7 +63,7 @@ public class SocksController {
     }
 
     @DeleteMapping
-    public void removeDefectiveSocks(@RequestBody SockRequest sockRequest) {
+    public void removeDefectiveSocks(@RequestBody SockDto sockRequest) {
         socksService.issueSocks(sockRequest);
     }
 
@@ -90,16 +90,8 @@ public class SocksController {
 
     @PostMapping(value = "import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Загрузить список")
-    public ResponseEntity<Void> uploadFile(@RequestParam MultipartFile file) {
-        fileService.cleanFile();
-        try (FileOutputStream fos = new FileOutputStream(fileService.getFile())) {
-            IOUtils.copy(file.getInputStream(), fos);
-            return ResponseEntity.ok().build();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        } catch (IOException e) {
-            throw new WritingFileException("Неверный формат файла для записи, попробуйте снова");
-        }
+    public ResponseEntity<Void> loadFile() {
+        File file = fileService.getFile();
+        return fileService.uploadFile((MultipartFile) file);
     }
 }

@@ -1,22 +1,23 @@
 package me.vik.socksstorageapp.service.Impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import me.vik.socksstorageapp.dto.SockRequest;
-import com.fasterxml.jackson.core.type.TypeReference;
+import me.vik.socksstorageapp.dto.SockDto;
 import me.vik.socksstorageapp.exception.InsufficientQuantityException;
 import me.vik.socksstorageapp.exception.InvalidSockRequestException;
 import me.vik.socksstorageapp.model.Color;
 import me.vik.socksstorageapp.model.Size;
 import me.vik.socksstorageapp.model.Socks;
 import me.vik.socksstorageapp.service.SocksService;
+import org.springframework.boot.convert.ApplicationConversionService;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.Map;
 
+
 @Service
-public class SocksServiceImpl implements SocksService {
+@Configuration
+public class SocksServiceImpl implements SocksService  {
 
     private final FileServiceImpl fileService;
 
@@ -27,7 +28,12 @@ public class SocksServiceImpl implements SocksService {
     }
 
     @Override
-    public void addSocks(SockRequest sockRequest) {
+    public void addFormatters(FormatterRegistry registry) {
+        ApplicationConversionService.configure(registry);
+    }
+
+    @Override
+    public void addSocks(SockDto sockRequest) {
 
         Socks socks = mapToSocks(sockRequest);
         if (socksStorage.containsKey(socks)) {
@@ -59,16 +65,16 @@ public class SocksServiceImpl implements SocksService {
     }
 
     @Override
-    public void removeDefectiveSocks(SockRequest sockRequest) {
+    public void removeDefectiveSocks(SockDto sockRequest) {
         decreaseSocks(sockRequest);
     }
 
     @Override
-    public void issueSocks(SockRequest sockRequest) {
+    public void issueSocks(SockDto sockRequest) {
         decreaseSocks(sockRequest);
     }
 
-    private void decreaseSocks (SockRequest sockRequest) {
+    private void decreaseSocks (SockDto sockRequest) {
         validateRequest(sockRequest);
         Socks socks = mapToSocks(sockRequest);
         int socksQuantity = socksStorage.getOrDefault(socks, 0);
@@ -80,7 +86,7 @@ public class SocksServiceImpl implements SocksService {
     }
 
     @Override
-    public Socks mapToSocks(SockRequest sockRequest) {
+    public Socks mapToSocks(SockDto sockRequest) {
         return new Socks(
                 sockRequest.getColor(),
                 sockRequest.getSize(),
@@ -88,7 +94,7 @@ public class SocksServiceImpl implements SocksService {
     }
 
     @Override
-    public void validateRequest(SockRequest sockRequest) {
+    public void validateRequest(SockDto sockRequest) {
         if (sockRequest.getColor() == null || sockRequest.getSize() == null) {
             throw new InvalidSockRequestException("Все поля должны быть заполнены");
         }

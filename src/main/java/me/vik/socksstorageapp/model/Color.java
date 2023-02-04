@@ -1,5 +1,6 @@
 package me.vik.socksstorageapp.model;
 
+
 public enum Color {
     RED("красный"),
     GREEN("зеленый"),

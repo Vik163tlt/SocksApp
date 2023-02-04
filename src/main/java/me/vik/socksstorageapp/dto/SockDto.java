@@ -5,7 +5,7 @@ import me.vik.socksstorageapp.model.Color;
 import me.vik.socksstorageapp.model.Size;
 
 @Data
-public class SockRequest {
+public class SockDto {
 
     private Color color;
 
